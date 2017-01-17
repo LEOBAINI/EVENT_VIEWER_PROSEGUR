@@ -1,0 +1,8 @@
+Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");	
+		Connection conn = DriverManager.getConnection("jdbc:sqlserver://10.54.54.41;user=sa;password=anaconda1;database=monitortestdb");
+		System.out.println("test");
+		Statement sta = conn.createStatement();
+		String Sql = "select top 10 * from site";
+		ResultSet rs = sta.executeQuery(Sql);
+		while (rs.next()) {
+			System.out.println(rs.getString(3));

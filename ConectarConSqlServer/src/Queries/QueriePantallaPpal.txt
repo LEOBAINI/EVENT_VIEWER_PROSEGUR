@@ -1,0 +1,14 @@
+select top 50 alarm_local_date as Fecha
+,sy.site_no
+,si.site_name as Nombre
+,sy.cs_no
+,al.event_id as Evento
+,e.descr as descripción
+,al.priority as prioridad
+from alarm_incident al
+
+inner join event e on e.event_id=al.event_id
+inner join system sy on sy.system_no=al.system_no
+inner join site si on si.site_no=sy.site_no
+and sy.site_no=1065 
+order by Fecha desc
