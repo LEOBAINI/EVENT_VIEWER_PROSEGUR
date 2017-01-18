@@ -12,8 +12,8 @@ public class Conexion {
         private  Connection c;
         protected  Statement statemente;
         protected  ResultSet resulsete;
-        public static String user=null;
-        public static String pass=null;
+        public static String user="sa";//null;
+        public static String pass="anaconda1";//null;
         private static String cadena=null;
         private static String driver="com.microsoft.sqlserver.jdbc.SQLServerDriver";
         private static String server="10.54.54.41";

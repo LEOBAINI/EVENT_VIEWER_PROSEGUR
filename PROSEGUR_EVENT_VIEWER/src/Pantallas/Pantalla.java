@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import java.awt.Dimension;
 import javax.swing.JScrollPane;
 import java.awt.Rectangle;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
@@ -22,11 +23,14 @@ import java.util.TimerTask;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JButton;
 import javax.swing.JTextField;
 
+
+import Inicio.RenderCelda;
 import MetodosSql.MetodosSql;
 import javax.swing.JLabel;
 import java.awt.TextField;
@@ -44,6 +48,15 @@ import java.awt.GridBagLayout;
 import javax.swing.border.TitledBorder;
 import java.awt.Font;
 import javax.swing.border.EtchedBorder;
+import javax.swing.filechooser.FileSystemView;
+
+import jxl.Workbook;
+import jxl.write.Label;
+import jxl.write.Number;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
+import jxl.write.biff.RowsExceededException;
 
 public class Pantalla extends JFrame {
 
@@ -64,6 +77,7 @@ public class Pantalla extends JFrame {
 	private JPanel jPanelRefrescar = null;
 	private JPanel jPanelFecha = null;
 	private JPanel jPanelControles = null;
+	private JButton jButtonExportarExcel = null;
 	public JDateChooser getDateChooser() {
 		return dateChooserDesde;
 	}
@@ -129,6 +143,7 @@ private void validarSegundosTimer(int segundos) {
 	}
 
 private void inicializarTablaYtimer(int segundos) throws FileNotFoundException, IOException{
+	
 	MetodosSql m=new MetodosSql();
 
 final String query = m.LeeArchivoParametros(".\\src\\Queries\\QueriePantallaPpal.txt");
@@ -142,7 +157,11 @@ try{timer.cancel();}catch(Exception e){}
 	        	 
 	        	 try{
 	        		 	jTable.setModel(MetodosSql.llenarJtable(query).getModel());
+	        		 	
 						jTable.repaint();
+						
+						
+						
 						}catch(Exception e){
 							JOptionPane.showMessageDialog(null,e.getLocalizedMessage());
 						}
@@ -159,6 +178,21 @@ try{timer.cancel();}catch(Exception e){}
 	    
 		
 	}
+private String seleccionarRuta(){
+	 String path=null;
+	 JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+		jfc.setDialogTitle("Elija un directorio para guardar el archivo: ");
+		jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		
+		
+		int returnValue = jfc.showOpenDialog(this);
+
+	if (returnValue == JFileChooser.APPROVE_OPTION) {
+		File selectedFile = jfc.getSelectedFile();
+		path=selectedFile.getAbsolutePath();
+	}
+	return path;
+}
 
 	/**
 	 * This method initializes jContentPane
@@ -224,16 +258,37 @@ try{timer.cancel();}catch(Exception e){}
 	private JTable getJTable() {
 		if (jTable == null) {
 			jTable = new JTable();
-			jTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+			jTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
 			jTable.setRowSelectionAllowed(false);
 			jTable.setShowGrid(true);
 			jTable.setToolTipText("Eventos de Alarmas");
+			jTable.setIntercellSpacing(new Dimension(3, 3));
 			
 			jTable.setBackground(new Color(255, 255, 204));
+			jTable.setDefaultRenderer (Object.class, new RenderCelda());
+			
+			
+			// Escondiendo la primer columna
+		/*	jTable.getColumnModel().getColumn(0).setMaxWidth(0);
+
+			jTable.getColumnModel().getColumn(0).setMinWidth(0);
+
+			jTable.getColumnModel().getColumn(0).setPreferredWidth(0);
+			*/
+
 			
 		}
 		return jTable;
 	}
+	private void setOcultarColumnasJTable(JTable tbl, int columna[])
+    {
+        for(int i=0;i<columna.length;i++){
+             tbl.getColumnModel().getColumn(columna[i]).setMaxWidth(0);
+             tbl.getColumnModel().getColumn(columna[i]).setMinWidth(0);
+             tbl.getTableHeader().getColumnModel().getColumn(columna[i]).setMaxWidth(0);
+             tbl.getTableHeader().getColumnModel().getColumn(columna[i]).setMinWidth(0);
+        }
+    }
 
 	/**
 	 * This method initializes jButton	
@@ -253,6 +308,7 @@ try{timer.cancel();}catch(Exception e){}
 					try {
 						validarSegundosTimer(segundos);
 						inicializarTablaYtimer(segundos);
+						
 					} catch (FileNotFoundException e1) {
 						JOptionPane.showMessageDialog(null, e1.getMessage());
 						e1.printStackTrace();
@@ -275,7 +331,7 @@ try{timer.cancel();}catch(Exception e){}
 		if (jButtonFiltrarPorFecha == null) {
 			jButtonFiltrarPorFecha = new JButton();
 			jButtonFiltrarPorFecha.setToolTipText("Filtra los eventos en el rango de fechas indicado y apaga la consulta periódica");
-			jButtonFiltrarPorFecha.setBounds(new Rectangle(118, 94, 166, 22));
+			jButtonFiltrarPorFecha.setBounds(new Rectangle(173, 93, 127, 22));
 			jButtonFiltrarPorFecha.setText("Filtrar Por Fecha");
 			jButtonFiltrarPorFecha.setBorder(new LineBorder(Color.YELLOW));
 			jButtonFiltrarPorFecha.addActionListener(new java.awt.event.ActionListener() {
@@ -397,12 +453,13 @@ try{timer.cancel();}catch(Exception e){}
 			jPanelFecha.setLayout(null);
 			jPanelFecha.setBackground(new Color(247, 215, 6));
 			jPanelFecha.setBorder(BorderFactory.createTitledBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Color.yellow), "Consulta con filtro de fecha", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.BOLD, 12), new Color(51, 51, 51)));
-			jPanelFecha.setBounds(new Rectangle(156, 22, 294, 124));
+			jPanelFecha.setBounds(new Rectangle(126, 22, 324, 124));
 			jPanelFecha.add(getJButtonFiltrarPorFecha(), null);
 			jPanelFecha.add(jLabelDesde, null);
 			jPanelFecha.add(jLabelHasta, null);
 			jPanelFecha.add(getDateChooser(), null);
 			jPanelFecha.add(dateChooserHasta, null);
+			jPanelFecha.add(getJButtonExportarExcel(), null);
 		}
 		return jPanelFecha;
 	}
@@ -424,6 +481,46 @@ try{timer.cancel();}catch(Exception e){}
 			jPanelControles.add(jLabelImagen, null);
 		}
 		return jPanelControles;
+	}
+
+	/**
+	 * This method initializes jButtonExportarExcel	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getJButtonExportarExcel() {
+		if (jButtonExportarExcel == null) {
+			jButtonExportarExcel = new JButton();
+			jButtonExportarExcel.setText("Exportar a Excel");
+			jButtonExportarExcel.setBounds(new Rectangle(23, 93, 127, 22));
+			jButtonExportarExcel.setBorder(new LineBorder(Color.YELLOW));
+			jButtonExportarExcel.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					timer.cancel();
+					MetodosSql metodos=new MetodosSql();
+					String ruta=seleccionarRuta();
+					if(ruta==null){
+						JOptionPane.showMessageDialog(null,"Operación cancelada");
+					}else{
+					try {
+						metodos.exportarExcel(ruta+"\\PROSEGUR_ALARMAS.XLS",jTable, "ALARMAS");
+						JOptionPane.showMessageDialog(null,"Se exportó correctamente");
+					} catch (RowsExceededException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (WriteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					}
+					
+				}
+			});
+		}
+		return jButtonExportarExcel;
 	}
 
 }  //  @jve:decl-index=0:visual-constraint="6,13"

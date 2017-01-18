@@ -2,7 +2,8 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry exported="true" kind="lib" path="C:/Users/ar00122207.LATAM1/Documents/LibreriasJava/sqljdbc4-3.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="C:/Users/ar00122207.LATAM1/Documents/LibreriasJava/jcalendar-1.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/ar00122207.LATAM1/Documents/LibreriasJava/sqljdbc4-3.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/ar00122207.LATAM1/Documents/LibreriasJava/jxl.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -1,8 +1,10 @@
 package MetodosSql;
  
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -14,15 +16,65 @@ import java.util.Date;
  
 import java.util.Locale;
  
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.UIManager;
+import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableModel;
+
+import Pantallas.Pantalla;
+
+import jxl.Workbook;
+import jxl.write.Label;
+import jxl.write.Number;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
+import jxl.write.biff.RowsExceededException;
  
 public class MetodosSql extends Conexion {
      
     public MetodosSql() {
     }
      
+    public void exportarExcel(String rutaOutPut,JTable tabla,String nombreHoja) throws IOException, RowsExceededException, WriteException{
+        WritableWorkbook wworkbook;
+        wworkbook = Workbook.createWorkbook(new File(rutaOutPut));
+        WritableSheet wsheet = wworkbook.createSheet(nombreHoja, 0);
+        //COLUMNA FILA DESDE 0    
+       
+       
+       
+        int filas=tabla.getRowCount();
+		int columnas=tabla.getColumnCount();
+		
+		 
+		for(int fila=0;fila<=filas;fila++){
+			for(int columna=0;columna<columnas;columna++){
+				if(fila==0){
+					wsheet.addCell(new Label( columna,fila,tabla.getModel().getColumnName(columna)));	
+					
+				}else{
+					wsheet.addCell(new Label( columna,fila, tabla.getValueAt(fila-1, columna).toString()));	
+					System.out.println(tabla.getValueAt(fila-1, columna));
+				}
+				
+			
+				
+				
+				
+			}
+		}     
+		wworkbook.write();
+		wworkbook.close();
+        
+       
+       
+
+        
+  	  }
+        
      
          
     public static String dameFechaDeHoy(){
@@ -145,27 +197,9 @@ public class MetodosSql extends Conexion {
          
  
     }
-    public String dameNroTeDoyMes(int numeroDeMes){
-        String mes="NO EXISTE ESE MES";
-        if(numeroDeMes >=1 && numeroDeMes <=12){
-        switch(numeroDeMes){
-        case 1:mes="ENERO";break;
-        case 2:mes="FEBRERO";break;
-        case 3:mes="MARZO";break;
-        case 4:mes="ABRIL";break;
-        case 5:mes="MAYO";break;
-        case 6:mes="JUNIO";break;
-        case 7:mes="JULIO";break;
-        case 8:mes="AGOSTO";break;
-        case 9:mes="SEPTIEMBRE";break;
-        case 10:mes="OCTUBRE";break;
-        case 11:mes="NOVIEMBRE";break;
-        case 12:mes="DICIEMBRE";break;
-        }
-        }
+   
          
-        return mes;
-    }
+      
     public static JTable llenarJtable(String sentencia ){
         Conexion con = new Conexion();
         DefaultTableModel modelo=new DefaultTableModel();//voy a modelar mi jtable
