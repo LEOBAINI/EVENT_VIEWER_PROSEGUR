@@ -22,7 +22,7 @@ public class RenderCelda extends DefaultTableCellRenderer
             {
                // cell.setBackground(Color.red.brighter());
                 cell.setForeground(Color.red.brighter());
-                System.out.println(cell.getY());
+               
             }
             else if(color.equals("blue")){
               //cell.setBackground(Color.blue.brighter());

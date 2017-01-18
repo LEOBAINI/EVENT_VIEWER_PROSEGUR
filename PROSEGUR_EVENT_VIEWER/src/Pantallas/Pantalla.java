@@ -340,7 +340,7 @@ private String seleccionarRuta(){
 					timer.cancel();
 					}catch(Exception e1){}
 					 System.out.println("Tarea Cancelada"); 
-					 System.out.println();
+					
 					 String fecha1=obtenerFechaChooser(dateChooserDesde);
 					 String fecha2=obtenerFechaChooser(dateChooserHasta);
 					
