@@ -1,0 +1,5 @@
+/*Parametros de conexión*/
+
+ipDEstino:10.51.132.132
+nombreBaseDatos:monitordb
+tiempoConsultaSegundos:60

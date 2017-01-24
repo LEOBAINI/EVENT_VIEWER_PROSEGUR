@@ -1,62 +1,51 @@
 package Pantallas;
 
-import java.awt.BorderLayout;
-import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.HeadlessException;
 import java.awt.Image;
-
-import javax.swing.JFrame;
-import java.awt.Dimension;
-import javax.swing.JScrollPane;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Locale;
+import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.JButton;
-import javax.swing.JTextField;
-
-
-import Inicio.RenderCelda;
-import MetodosSql.MetodosSql;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
-import java.awt.TextField;
-import java.awt.Color;
-
-import javax.swing.border.LineBorder;
-import javax.swing.border.SoftBevelBorder;
-import java.awt.Toolkit;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.WindowConstants;
-import javax.swing.BorderFactory;
-import com.toedter.calendar.JDateChooser;
-import com.toedter.calendar.JCalendar;
-
-import java.awt.GridBagLayout;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
-import java.awt.Font;
-import javax.swing.border.EtchedBorder;
 import javax.swing.filechooser.FileSystemView;
 
-import jxl.Workbook;
-import jxl.write.Label;
-import jxl.write.Number;
-import jxl.write.WritableSheet;
-import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
+
+import org.apache.log4j.Logger;
+
+import Clases.Hilo;
+import Clases.ParametrosInicio;
+import Clases.RenderCelda;
+import MetodosSql.MetodosSql;
+
+import com.toedter.calendar.JDateChooser;
 
 public class Pantalla extends JFrame {
 
@@ -71,22 +60,31 @@ public class Pantalla extends JFrame {
 	private Timer timer;  //  @jve:decl-index=0:
 	private JLabel jLabelImagen = null;
 	private JTextField jTextFieldSegundos = null;
-	private int segundos=10;
+	private int segundos=60;//
 	private JDateChooser dateChooserDesde;
 	private JDateChooser dateChooserHasta;
 	private JPanel jPanelRefrescar = null;
 	private JPanel jPanelFecha = null;
 	private JPanel jPanelControles = null;
 	private JButton jButtonExportarExcel = null;
+	private String QuerieConFiltroFecha=null;
+	private String QueryPantallaPpal=null;  //  @jve:decl-index=0:
+	private String query=null;
+	Calendar calendario ;
+	 final static Logger logger = Logger.getLogger(Pantalla.class);  //  @jve:decl-index=0:
+	private JLabel jLabelInfo = null;
+	private boolean trabajando=false;
 	public JDateChooser getDateChooser() {
 		return dateChooserDesde;
 	}
-
 	public Pantalla() throws HeadlessException, FileNotFoundException, IOException {
 		// TODO Auto-generated constructor stub
 		super();
 		initialize();
 	}
+	
+
+	
 
 	public Pantalla(GraphicsConfiguration arg0) throws FileNotFoundException, IOException {
 		super(arg0);
@@ -124,7 +122,7 @@ public class Pantalla extends JFrame {
 		this.setTitle("Prosegur Alarmas");
 		this.setVisible(true);
 		
-		
+		segundos=Integer.parseInt(ParametrosInicio.getTiempoRefrescoTabla());
 		inicializarTablaYtimer(segundos);
 		
 	
@@ -134,6 +132,7 @@ private void validarSegundosTimer(int segundos) {
 		segundos=Integer.parseInt(jTextFieldSegundos.getText());
 	}catch(Exception e){
 		JOptionPane.showMessageDialog(null, e.getMessage());
+		 logger.error("Error : " +e.getMessage());
 	}
 	if (segundos<10){
 		segundos=10;
@@ -142,31 +141,58 @@ private void validarSegundosTimer(int segundos) {
 		
 	}
 
-private void inicializarTablaYtimer(int segundos) throws FileNotFoundException, IOException{
+private void inicializarTablaYtimer(final int segundos) throws FileNotFoundException, IOException{
 	
-	MetodosSql m=new MetodosSql();
 
-final String query = m.LeeArchivoParametros(".\\src\\Queries\\QueriePantallaPpal.txt");
-try{timer.cancel();}catch(Exception e){}	
-
+	logger.info("inicializarTablaYtimer");
 	
+	
+	
+	if(QueryPantallaPpal==null){
+		MetodosSql m=new MetodosSql();
+		QueryPantallaPpal= m.LeeArchivoParametros("/Queries/QueriePantallaPpal.txt");
+		query=QueryPantallaPpal;		
+		
+	}else if(QueryPantallaPpal!=null){
+		 	query=QueryPantallaPpal;
+	}
+  
+try{timer.cancel();}catch(Exception e){ logger.error("Error esperable timer.cancel() : " +e.getMessage());}	
+
+
 		 TimerTask timerTask = new TimerTask() 
 	     { 
 	         public void run()  
 	         { 
+	        	 trabajando=true;
 	        	 
 	        	 try{
-	        		 	jTable.setModel(MetodosSql.llenarJtable(query).getModel());
+	        		 calendario= new GregorianCalendar();
+	        		 String hora =    String.valueOf(calendario.get(Calendar.HOUR_OF_DAY));
+	        		 String minutos = String.valueOf( calendario.get(Calendar.MINUTE));
+	        		 String segundo = String.valueOf(calendario.get(Calendar.SECOND));
+	        		 if(hora.length()==1)
+	        			 hora="0"+hora;
+	        		 if(minutos.length()==1)
+	        			 minutos="0"+minutos;
+	        		 if(segundo.length()==1)
+	        			 segundo="0"+segundo;
+	        		 
+	        		 
+	        		 	jTable.setModel(MetodosSql.llenarJtable(query,jLabelInfo,hora,minutos,segundo).getModel());
 	        		 	
 						jTable.repaint();
 						
-						
+						logger.info("Refrescando tabla");
+						 trabajando=false;
 						
 						}catch(Exception e){
 							JOptionPane.showMessageDialog(null,e.getLocalizedMessage());
+							 logger.error("Error : " +e.getMessage());
+							 trabajando=false;
 						}
 	     		  		
-	             System.out.println("TESTING TIMER");
+	            
 	         } 
 	     }; 
 	     
@@ -266,35 +292,19 @@ private String seleccionarRuta(){
 			
 			jTable.setBackground(new Color(255, 255, 204));
 			jTable.setDefaultRenderer (Object.class, new RenderCelda());
+			jTable.getTableHeader().setReorderingAllowed(false) ;
 			
-			
-			// Escondiendo la primer columna
-		/*	jTable.getColumnModel().getColumn(0).setMaxWidth(0);
-
-			jTable.getColumnModel().getColumn(0).setMinWidth(0);
-
-			jTable.getColumnModel().getColumn(0).setPreferredWidth(0);
-			*/
-
-			
+				
 		}
 		return jTable;
 	}
-	private void setOcultarColumnasJTable(JTable tbl, int columna[])
-    {
-        for(int i=0;i<columna.length;i++){
-             tbl.getColumnModel().getColumn(columna[i]).setMaxWidth(0);
-             tbl.getColumnModel().getColumn(columna[i]).setMinWidth(0);
-             tbl.getTableHeader().getColumnModel().getColumn(columna[i]).setMaxWidth(0);
-             tbl.getTableHeader().getColumnModel().getColumn(columna[i]).setMinWidth(0);
-        }
-    }
-
+	
 	/**
 	 * This method initializes jButton	
 	 * 	
 	 * @return javax.swing.JButton	
 	 */
+	
 	private JButton getJButton() {
 		if (jButton == null) {
 			jButton = new JButton();
@@ -305,17 +315,33 @@ private String seleccionarRuta(){
 			jButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 				
+					if(trabajando==false){
 					try {
+						
 						validarSegundosTimer(segundos);
 						inicializarTablaYtimer(segundos);
+						logger.info("Usuario oprime botón refrescar");
+						trabajando=false;
 						
 					} catch (FileNotFoundException e1) {
 						JOptionPane.showMessageDialog(null, e1.getMessage());
-						e1.printStackTrace();
+						
+						
+						 logger.error("Error : " +e1.getMessage());
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						JOptionPane.showMessageDialog(null, e1.getMessage());
+						 logger.error("Error : " +e1.getMessage());
+						
 					}
+				
+					}else if(trabajando==true){
+						 JOptionPane.showMessageDialog(null, "Ya hay una consulta en curso, por favor aguarde a que finalice");
+					}
+				
+				
+				
+				
 				}
 			});
 		}
@@ -336,45 +362,70 @@ private String seleccionarRuta(){
 			jButtonFiltrarPorFecha.setBorder(new LineBorder(Color.YELLOW));
 			jButtonFiltrarPorFecha.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
+					if(Hilo.estaVivo){
+						 JOptionPane.showMessageDialog(null, "Ya hay una consulta en curso, por favor aguarde a que finalice");
+					}else {
 					try{ 
 					timer.cancel();
-					}catch(Exception e1){}
-					 System.out.println("Tarea Cancelada"); 
+					}catch(Exception e1){ }
+					// System.out.println("Tarea Cancelada"); 
 					
 					 String fecha1=obtenerFechaChooser(dateChooserDesde);
-					 String fecha2=obtenerFechaChooser(dateChooserHasta);
+					 String fecha2=obtenerFechaChooser(dateChooserHasta);		
+					 Hilo hilo=new Hilo(fecha1,fecha2,jTable,jLabelInfo);
 					
+					 hilo.start();
+					}				
+					// inicializarTablaConFecha(fecha1,fecha2);
 					 
-					 inicializarTablaConFecha(fecha1,fecha2);
 				}
 
 				
 				
 				
+				@SuppressWarnings("unused")
 				private void inicializarTablaConFecha(String fecha1,
 						String fecha2)  {
+					try{
 						MetodosSql m=new MetodosSql();
 						String query = null;
 						if(fecha1==null || fecha2==null){
 							JOptionPane.showMessageDialog(null,"Verifique los campos de fecha");
+							logger.info("Usuario no completa campos fecha para el filtro");
 						}else{
-						try {
-							query = m.LeeArchivoParametros(".\\src\\Queries\\QuerieConFiltroFecha.txt");
-							query=query.replaceAll("@fechadesde", "'"+fecha1+"'");
-							query=query.replaceAll("@fechahasta", "'"+fecha2+"'");
-							System.out.println(query);
-							jTable.setModel(MetodosSql.llenarJtable(query).getModel());							
-							jTable.repaint();
-						} catch (FileNotFoundException e1) {
-							// TODO Auto-generated catch block
-							JOptionPane.showMessageDialog(null,e1.getMessage());
-						} catch (IOException e1) {
-							// TODO Auto-generated catch block
-							JOptionPane.showMessageDialog(null,e1.getMessage());
+						// Para que cargue los datos sólo una vez.
+							if(QuerieConFiltroFecha==null){
+								QuerieConFiltroFecha=m.LeeArchivoParametros("/Queries/QuerieConFiltroFecha.txt");
+								query = QuerieConFiltroFecha;
+							}else{
+								query = QuerieConFiltroFecha;
+							}
+						
+						
+						query=query.replaceAll("@fechadesde", "'"+fecha1+"'");
+						query=query.replaceAll("@fechahasta", "'"+fecha2+"'");
+						System.out.println(query);
+						 calendario= new GregorianCalendar();
+		        		 String hora =    String.valueOf(calendario.get(Calendar.HOUR_OF_DAY));
+		        		 String minutos = String.valueOf( calendario.get(Calendar.MINUTE));
+		        		 String segundo = String.valueOf(calendario.get(Calendar.SECOND));
+		        		 if(hora.length()==1)
+		        			 hora="0"+hora;
+		        		 if(minutos.length()==1)
+		        			 minutos="0"+minutos;
+		        		 if(segundo.length()==1)
+		        			 segundo="0"+segundo;
+						jTable.setModel(MetodosSql.llenarJtable(query, jLabelInfo, hora, minutos, segundo).getModel());							
+						jTable.repaint();
+						jLabelInfo.setText("Pulsó Botón filtro, para ver automático\n oprima Refrescar");
+						logger.info("Refrescando tabla manual por oprimir botón filtro");
 						}
 						
+					}catch(Exception e){
+							logger.error(e.getMessage());
+						}
 					 				
-						}		
+								
 									
 				}
 			});
@@ -390,8 +441,15 @@ private String seleccionarRuta(){
 	private JTextField getJTextFieldSegundos() {
 		if (jTextFieldSegundos == null) {
 			jTextFieldSegundos = new JTextField();
-			jTextFieldSegundos.setText("10");
+			jTextFieldSegundos.setText(ParametrosInicio.getTiempoRefrescoTabla());
 			jTextFieldSegundos.setBounds(new Rectangle(250, 15, 34, 20));
+			jTextFieldSegundos.addKeyListener(new java.awt.event.KeyAdapter() {
+				public void keyPressed(java.awt.event.KeyEvent e) {
+					if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+					     jButton.doClick();
+					   }
+				}
+			});
 		}
 		return jTextFieldSegundos;
 	}
@@ -418,7 +476,8 @@ private String seleccionarRuta(){
 		resultado=anio+"-"+mes+"-"+dia;
 		System.out.println(resultado);
 		}catch(Exception e){
-			System.out.println(e.getMessage());
+			//System.out.println(e.getMessage());
+			 logger.error("Error : " +e.getMessage());
 		}
 		return resultado;
 	
@@ -431,13 +490,17 @@ private String seleccionarRuta(){
 	 */
 	private JPanel getJPanelRefrescar() {
 		if (jPanelRefrescar == null) {
+			jLabelInfo = new JLabel();
+			jLabelInfo.setBounds(new Rectangle(10, 42, 383, 23));
+			jLabelInfo.setText("");
 			jPanelRefrescar = new JPanel();
 			jPanelRefrescar.setLayout(null);
 			jPanelRefrescar.setBackground(new Color(247, 215, 6));
 			jPanelRefrescar.setBorder(BorderFactory.createTitledBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Color.yellow), "Seteo de tiempo en segundos", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.BOLD, 12), new Color(51, 51, 51)));
-			jPanelRefrescar.setBounds(new Rectangle(928, 22, 294, 124));
+			jPanelRefrescar.setBounds(new Rectangle(881, 22, 402, 124));
 			jPanelRefrescar.add(getJButton(), null);
 			jPanelRefrescar.add(getJTextFieldSegundos(), null);
+			jPanelRefrescar.add(jLabelInfo, null);
 		}
 		return jPanelRefrescar;
 	}
@@ -453,7 +516,7 @@ private String seleccionarRuta(){
 			jPanelFecha.setLayout(null);
 			jPanelFecha.setBackground(new Color(247, 215, 6));
 			jPanelFecha.setBorder(BorderFactory.createTitledBorder(BorderFactory.createMatteBorder(5, 5, 5, 5, Color.yellow), "Consulta con filtro de fecha", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, new Font("Dialog", Font.BOLD, 12), new Color(51, 51, 51)));
-			jPanelFecha.setBounds(new Rectangle(126, 22, 324, 124));
+			jPanelFecha.setBounds(new Rectangle(79, 22, 432, 124));
 			jPanelFecha.add(getJButtonFiltrarPorFecha(), null);
 			jPanelFecha.add(jLabelDesde, null);
 			jPanelFecha.add(jLabelHasta, null);
@@ -475,7 +538,7 @@ private String seleccionarRuta(){
 			jPanelControles.setLayout(null);
 			jPanelControles.setBounds(new Rectangle(4, 486, 1330, 159));
 			jPanelControles.setBackground(new Color(247, 215, 6));
-			jPanelControles.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.yellow, 5), "PROSEGUR EVENT VIEWER", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.TOP, new Font("Dialog", Font.BOLD, 12), new Color(51, 51, 51)));
+			jPanelControles.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.yellow, 5), "PROSEGUR ALARM  EVENT VIEWER", TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.TOP, new Font("Dialog", Font.BOLD, 12), new Color(51, 51, 51)));
 			jPanelControles.add(getJPanelFecha(), null);
 			jPanelControles.add(getJPanelRefrescar(), null);
 			jPanelControles.add(jLabelImagen, null);
@@ -501,19 +564,24 @@ private String seleccionarRuta(){
 					String ruta=seleccionarRuta();
 					if(ruta==null){
 						JOptionPane.showMessageDialog(null,"Operación cancelada");
+						logger.info("Usuario cancela exportar Excel");
 					}else{
 					try {
 						metodos.exportarExcel(ruta+"\\PROSEGUR_ALARMAS.XLS",jTable, "ALARMAS");
 						JOptionPane.showMessageDialog(null,"Se exportó correctamente");
+						metodos.abrirarchivo(ruta+"\\PROSEGUR_ALARMAS.XLS");
 					} catch (RowsExceededException e1) {
+						 logger.error("Error : " +e1.getMessage());
 						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						//e1.printStackTrace();
 					} catch (WriteException e1) {
 						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						 logger.error("Error : " +e1.getMessage());
+						//e1.printStackTrace();
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						 logger.error("Error : " +e1.getMessage());
+						//e1.printStackTrace();
 					}
 					}
 					
@@ -522,5 +590,6 @@ private String seleccionarRuta(){
 		}
 		return jButtonExportarExcel;
 	}
+	
 
 }  //  @jve:decl-index=0:visual-constraint="6,13"

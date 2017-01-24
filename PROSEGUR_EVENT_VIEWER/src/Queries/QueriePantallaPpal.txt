@@ -1,17 +1,24 @@
 select top 50 
-alarm_local_date as Fecha
-,sy.site_no
+al.alarm_local_date as Fecha
 ,si.site_name as Nombre
-,sy.cs_no
+,si.city_name as Ciudad
+,sy.cs_no as Cod_con
+,z.comment as Zona
 ,al.event_id as Evento
-,e.descr as descripción
-,al.priority as prioridad
+,e.descr as Descripción
+,al.priority as Prioridad
 
-from alarm_incident al
-
-inner join event e on e.event_id=al.event_id
-inner join system sy on sy.system_no=al.system_no
-inner join site si on si.site_no=sy.site_no
-inner join alarm_priority pri on pri.priority=al.priority
-and sy.site_no=1065 
-order by Fecha desc
+ from  alarm_incident al with (nolock)
+ inner join event e on e.event_id=al.event_id
+ inner join system sy on sy.system_no=al.system_no
+ inner join site si on si.site_no=sy.site_no
+ inner join zone z on z.zone_id=al.alarm_zone_id and z.system_no=al.system_no
+ 
+ and al.system_no in (Select system_no from system where site_no in (select site_no from site where udf4 in (
+ /*Colocar contratos separados por coma y entre comillas simples*/
+ '097277'
+ 
+ 
+ )))
+  
+ order by alarm_local_date desc

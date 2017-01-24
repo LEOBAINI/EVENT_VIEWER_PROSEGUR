@@ -1,24 +1,26 @@
 package Pantallas;
 
-import java.awt.BorderLayout;
-import javax.swing.JPanel;
-import javax.swing.JFrame;
-import java.awt.Toolkit;
-import javax.swing.JLabel;
-import java.awt.Rectangle;
-import javax.swing.JTextPane;
-import java.awt.Dimension;
-import javax.swing.ImageIcon;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import javax.swing.JButton;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
+import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
+import Clases.ParametrosInicio;
 import MetodosSql.Conexion;
 import MetodosSql.MetodosSql;
 
@@ -33,8 +35,9 @@ public class Login extends JFrame {
 	private JButton jButtonAceptar = null;
 	private JTextField jTextFieldUsuario = null;
 	private JPasswordField jPasswordField = null;
+	final static Logger logger = Logger.getLogger(Login.class);  //  @jve:decl-index=0:
 	boolean conecto;
-
+	private JLabel jLabelInfo = null;
 	public boolean isConecto() {
 		return conecto;
 	}
@@ -61,6 +64,7 @@ public class Login extends JFrame {
 		this.setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/Imagenes/ProsegurAlarmas.png")));
 		this.setContentPane(getJContentPane());
 		this.setTitle("Login");
+		jLabelInfo.setText("HOST: "+ParametrosInicio.getIpDestino()+" / DB: "+ParametrosInicio.getBaseDatos());
 	}
 
 	/**
@@ -70,6 +74,9 @@ public class Login extends JFrame {
 	 */
 	private JPanel getJContentPane() {
 		if (jContentPane == null) {
+			jLabelInfo = new JLabel();
+			jLabelInfo.setBounds(new Rectangle(17, 177, 417, 21));
+			jLabelInfo.setText("");
 			jLabelEventViewer = new JLabel();
 			jLabelEventViewer.setBounds(new Rectangle(447, 167, 162, 24));
 			jLabelEventViewer.setFont(new Font("Dialog", Font.BOLD, 14));
@@ -95,6 +102,12 @@ public class Login extends JFrame {
 			jContentPane.add(getJButtonAceptar(), null);
 			jContentPane.add(getJTextFieldUsuario(), null);
 			jContentPane.add(getJPasswordField(), null);
+			jContentPane.add(jLabelInfo, null);
+			this.addWindowListener(new WindowAdapter(){
+                public void windowClosing(WindowEvent e){
+                    logger.info("Saliendo del programa");
+                    }
+            });
 		}
 		return jContentPane;
 	}
@@ -112,13 +125,12 @@ public class Login extends JFrame {
 			jButtonAceptar.setText("Aceptar");
 			jButtonAceptar.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					System.out.println(jTextFieldUsuario.getText());
-					System.out.println(jPasswordField.getPassword());
+					
 					try{
 					MetodosSql metodos=new MetodosSql();
 					Conexion.user=(jTextFieldUsuario.getText());
 					Conexion.pass=(String.copyValueOf(jPasswordField.getPassword()));
-					System.out.println("El pass es : "+String.copyValueOf(jPasswordField.getPassword()));
+					
 					setConecto( metodos.conectar());
 					if(conecto==true){
 						
@@ -140,10 +152,15 @@ public class Login extends JFrame {
 						pant.setVisible(true);		
 						*/
 					}else{
+
+						
+						logger.error("Fallo la conexión, verifique red \n usuario y contraseña");
+						
 						JOptionPane.showMessageDialog(null,"Fallo la conexión, verifique red \n usuario y contraseña");
 					}
 						
 					}catch(Exception e1){
+						logger.error(e1.getMessage());
 						JOptionPane.showMessageDialog(null,e1.getMessage());
 					}
 				}

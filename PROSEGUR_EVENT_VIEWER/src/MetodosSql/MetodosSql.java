@@ -1,39 +1,35 @@
 package MetodosSql;
  
+import java.awt.Desktop;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileReader;
-
-import java.awt.Color;
-import java.awt.Component;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.sql.*;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
- 
 import java.util.Date;
- 
 import java.util.Locale;
- 
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
+
+import javax.swing.JLabel;
 import javax.swing.JTable;
-import javax.swing.UIManager;
-import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableModel;
 
-import Pantallas.Pantalla;
+import org.apache.log4j.Logger;
 
 import jxl.Workbook;
 import jxl.write.Label;
-import jxl.write.Number;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
  
 public class MetodosSql extends Conexion {
+	 final static Logger logger = Logger.getLogger(MetodosSql.class);
      
     public MetodosSql() {
     }
@@ -43,7 +39,7 @@ public class MetodosSql extends Conexion {
         wworkbook = Workbook.createWorkbook(new File(rutaOutPut));
         WritableSheet wsheet = wworkbook.createSheet(nombreHoja, 0);
         //COLUMNA FILA DESDE 0    
-       
+       try{
        
        
         int filas=tabla.getRowCount();
@@ -68,8 +64,11 @@ public class MetodosSql extends Conexion {
 		}     
 		wworkbook.write();
 		wworkbook.close();
+		 logger.info("Archivo "+rutaOutPut+" exportado ok");
         
-       
+       }catch(Exception e){
+    	   logger.error("Error : " +e.getMessage());
+       }
        
 
         
@@ -113,10 +112,9 @@ public class MetodosSql extends Conexion {
         } catch (SQLException e) {
             System.out.println("Error en insertarOmodificar");
             System.out.println(e.getMessage());
-            JOptionPane.showMessageDialog(null, e.getMessage());
-            e.printStackTrace();
             con.desconectar();
             status=-1;
+            logger.error("Error : " +e.getMessage());
         }
         return status;
  
@@ -153,6 +151,7 @@ public class MetodosSql extends Conexion {
         } catch (Exception e) {
             System.out.println("Error en metodosSql.consultar"+e.getMessage());
             System.out.println(e.getLocalizedMessage());
+            logger.error("Error : " +e.getMessage());
              
         }
  
@@ -190,6 +189,7 @@ public class MetodosSql extends Conexion {
         } catch (Exception e) {
             System.out.println("Error en metodosSql.consultarUnaColumna"+e.getMessage());
             con.desconectar();
+            logger.error("Error : " +e.getMessage());
              
         }
  
@@ -200,7 +200,7 @@ public class MetodosSql extends Conexion {
    
          
       
-    public static JTable llenarJtable(String sentencia ){
+    public static JTable llenarJtable(String sentencia, JLabel labelInfo, String hora, String minutos, String segundo ) throws InterruptedException{
         Conexion con = new Conexion();
         DefaultTableModel modelo=new DefaultTableModel();//voy a modelar mi jtable
         JTable tablaDatos=new JTable(modelo);
@@ -211,11 +211,15 @@ public class MetodosSql extends Conexion {
        
          
         
+        
          
         try {
-         
+        labelInfo.setText("Ejecutando Consulta a la Base");
         con.resulsete = con.statemente.executeQuery(sentencia);
+        Thread.sleep(1500);
+        
         metadatos=con.resulsete.getMetaData();//extraigo datos sobre el resulset
+        labelInfo.setText("Obteniendo datos");
          
         int cantColumnas=metadatos.getColumnCount();// pido cant columnas
         
@@ -229,6 +233,8 @@ public class MetodosSql extends Conexion {
          
         }
         //avanzo por el resulset para mostrar resultado de consultas
+        labelInfo.setText("Cargando datos...");
+        Thread.sleep(1500);
           while(con.resulsete.next()){
             // Bucle para cada resultado en la consulta
               
@@ -241,15 +247,18 @@ public class MetodosSql extends Conexion {
  
                  // Se añade al modelo la fila completa.
                  modelo.addRow(fila);
+                
                  //cell.setBackground(Color.RED);
               }
-          
- 
+          labelInfo.setText("Entregando Datos.");
+          Thread.sleep(1500);
+          labelInfo.setText("Última conexión "+hora + ":" + minutos + ":" + segundo);
+          Thread.sleep(1500);
          
         } 
         catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
-           // e.printStackTrace();
+        
+            logger.error("Error : " +e.getMessage());
         }
         con.desconectar();
         return tablaDatos;
@@ -260,29 +269,112 @@ public class MetodosSql extends Conexion {
          
  
     }
-    public int teDoyNombreProductoDameNumeroID(String nombreProducto){
-        int resultado=0;
-        MetodosSql metodos=new MetodosSql();
-        resultado=Integer.parseInt(metodos.consultarUnaColumna("SELECT idProducto  FROM imprenta.producto where nombreproducto= '"+nombreProducto+"';").get(0));
-        return resultado;
+   
+   
+    public String LeeArchivoParametros(String archivo)  {
+    	  logger.info("Intentando leer archivo "+archivo);
+    	  String resultado=null;    
+    	  String strLinea=null;
+    	  InputStream fstream = this.getClass().getResourceAsStream(archivo);
+          // Creamos el objeto de entrada
+          DataInputStream entrada = new DataInputStream(fstream);
+          // Creamos el Buffer de Lectura
+          BufferedReader buffer = new BufferedReader(new InputStreamReader(entrada)); 
+          
+          // Leer el archivo linea por linea
+          try {
+			while ((strLinea = buffer.readLine()) != null)   {
+			      // Imprimimos la línea por pantalla
+				  if(resultado==null){
+			    	  resultado=strLinea;
+			         }else{
+			        	 resultado=resultado+" "+strLinea;
+			         }
+			  
+			   
+			     // System.out.println(strLinea);
+				 
+			  }
+			 logger.info(archivo+" leído correctamente.");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+		//	e.printStackTrace();
+			 logger.error("Error : " +e.getMessage());
+		}
+          // Cerramos el archivo
+          try {
+			entrada.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+			 logger.error("Error : " +e.getMessage());
+		}    			
+          return resultado;
+   	}   	
+    
+    public ArrayList<String> LeeArchivoParametrosArray(String archivo)  {
+    	ArrayList<String>listaParam=new ArrayList<String>();
+  	  logger.info("Intentando leer archivo "+archivo);
+  	  String resultado=null;    
+  	  String strLinea=null;
+  	  InputStream fstream = this.getClass().getResourceAsStream(archivo);
+        // Creamos el objeto de entrada
+        DataInputStream entrada = new DataInputStream(fstream);
+        // Creamos el Buffer de Lectura
+        BufferedReader buffer = new BufferedReader(new InputStreamReader(entrada)); 
+        
+        // Leer el archivo linea por linea
+        try {
+			while ((strLinea = buffer.readLine()) != null)   {
+			      // Imprimimos la línea por pantalla
+				  if(resultado==null){
+			    	  resultado=strLinea;
+			         }else{
+			        	 resultado=resultado+" "+strLinea;
+			         }
+			  
+			   
+				  listaParam.add(strLinea);
+				 
+			  }
+			 logger.info(archivo+" leído correctamente.");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+		//	e.printStackTrace();
+			 logger.error("Error : " +e.getMessage());
+		}
+        // Cerramos el archivo
+        try {
+			entrada.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+			 logger.error("Error : " +e.getMessage());
+		}    			
+        return listaParam;
+ 	}   	
+	       
+	      
+		
+	
+    public void abrirarchivo(String archivo){
+
+        try {
+        	
+        	   logger.info("Intentando abrir : " +archivo);
+               File objetofile = new File (archivo);
+               Desktop.getDesktop().open(objetofile);
+               logger.info(archivo+ " abierto ok");  
+               
+
+        }catch (IOException ex) {
+        //System.out.println(ex.getMessage());
+        logger.error("Error : " +ex.getMessage());
+        }
+        
     }
- 
-    public String LeeArchivoParametros(String archivo) throws FileNotFoundException, IOException {
-    	  String resultado = null;
-    	  String cadena;
-	      FileReader f = new FileReader(archivo);
-	      BufferedReader b = new BufferedReader(f);
-	      while((cadena = b.readLine())!=null) {
-	         if(resultado==null){
-	    	  resultado=cadena;
-	         }else{
-	        	 resultado=resultado+" "+cadena;
-	         }
-	        // System.out.println(cadena);
-	      }
-	      b.close();
-		return resultado;
-	}
+
+
  
    
  

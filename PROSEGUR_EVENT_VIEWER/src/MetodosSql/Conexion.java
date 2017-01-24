@@ -1,8 +1,12 @@
 package MetodosSql;
  
+
+
 import java.sql.*;
 
-import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
+
+import Clases.ParametrosInicio;
  
  
  
@@ -12,12 +16,14 @@ public class Conexion {
         private  Connection c;
         protected  Statement statemente;
         protected  ResultSet resulsete;
-        public static String user="sa";//null;
-        public static String pass="anaconda1";//null;
+        public static String user=null;
+        public static String pass=null;
         private static String cadena=null;
         private static String driver="com.microsoft.sqlserver.jdbc.SQLServerDriver";
-        private static String server="10.54.54.41";
-        private static String database="monitordb";
+        private static String server=null;
+        private static String database=null;
+        final static Logger logger = Logger.getLogger(Conexion.class);
+    
         
         
         
@@ -56,6 +62,8 @@ public class Conexion {
         public boolean conectar(){
         	boolean conecto;
         	try{
+        		  server=ParametrosInicio.getIpDestino();
+        	      database=ParametrosInicio.getBaseDatos();
             	
             	cadena="jdbc:sqlserver://"+server+";user="+user+";password="+pass+";database="+database+"";
             	
@@ -66,16 +74,19 @@ public class Conexion {
                  
                 conecto=true;
             }catch(ClassNotFoundException e1){
+            	logger.error("Error en los drivers : " +e1.getMessage());
              System.out.println("Error en los drivers");
              conecto=false;
             }
             catch(SQLException e2){
-                System.out.println("Error en la conexion");
-                JOptionPane.showMessageDialog(null, e2.getMessage());
+             
+                logger.error("Error en la conexion : " +e2.getMessage());
+               
                 conecto=false;
  
             }catch(Exception e3){
-            	 JOptionPane.showMessageDialog(null, e3.getMessage());
+            	logger.error("Error al conectar : " +e3.getMessage());
+            	
                  conecto=false;
             	
             }
@@ -104,6 +115,7 @@ public class Conexion {
                      
                 } catch (SQLException e) {
                     // TODO Auto-generated catch block
+                	logger.error("Error al desconectar : " +e.getMessage());
                     System.out.println("Desconectado incorrecto");
                     e.printStackTrace();
                 }
