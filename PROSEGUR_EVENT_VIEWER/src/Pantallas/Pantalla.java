@@ -9,6 +9,8 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -121,15 +123,17 @@ public class Pantalla extends JFrame {
 		this.setContentPane(getJContentPane());
 		this.setTitle("Prosegur Alarmas");
 		this.setVisible(true);
-		
+		try{
 		segundos=Integer.parseInt(ParametrosInicio.getTiempoRefrescoTabla());
+		}catch(Exception e){segundos=60;}
 		inicializarTablaYtimer(segundos);
 		
 	
 	}
-private void validarSegundosTimer(int segundos) {
+private void validarSegundosTimer() {
 	try{
-		segundos=Integer.parseInt(jTextFieldSegundos.getText());
+		this.segundos=Integer.parseInt(jTextFieldSegundos.getText());
+		 logger.info("Modificando TIMER en -> "+this.segundos+" segundos");
 	}catch(Exception e){
 		JOptionPane.showMessageDialog(null, e.getMessage());
 		 logger.error("Error : " +e.getMessage());
@@ -140,7 +144,15 @@ private void validarSegundosTimer(int segundos) {
 }
 		
 	}
-
+public void setearTamanioColumnas(){
+	jTable.getColumnModel().getColumn(0).setMinWidth(150);
+ 	jTable.getColumnModel().getColumn(0).setMaxWidth(150);
+ 	jTable.getColumnModel().getColumn(3).setMinWidth(100);
+ 	jTable.getColumnModel().getColumn(3).setMaxWidth(110);
+ 	jTable.getColumnModel().getColumn(4).setMinWidth(200);
+ 	jTable.getColumnModel().getColumn(5).setMaxWidth(100);
+ 	jTable.getColumnModel().getColumn(7).setMaxWidth(70);
+}
 private void inicializarTablaYtimer(final int segundos) throws FileNotFoundException, IOException{
 	
 
@@ -157,7 +169,14 @@ private void inicializarTablaYtimer(final int segundos) throws FileNotFoundExcep
 		 	query=QueryPantallaPpal;
 	}
   
-try{timer.cancel();}catch(Exception e){ logger.error("Error esperable timer.cancel() : " +e.getMessage());}	
+
+	if(timer!=null){
+		try{
+			timer.cancel();
+			}catch(Exception e){
+				logger.error("Error esperable timer.cancel() : " +e.getMessage());}	
+			}
+
 
 
 		 TimerTask timerTask = new TimerTask() 
@@ -180,13 +199,12 @@ try{timer.cancel();}catch(Exception e){ logger.error("Error esperable timer.canc
 	        		 
 	        		 
 	        		 	jTable.setModel(MetodosSql.llenarJtable(query,jLabelInfo,hora,minutos,segundo).getModel());
-	        		 	
-						jTable.repaint();
+	        		 	setearTamanioColumnas();
+						//jTable.repaint();
 						
 						logger.info("Refrescando tabla");
 						 trabajando=false;
-						
-						}catch(Exception e){
+							}catch(Exception e){
 							JOptionPane.showMessageDialog(null,e.getLocalizedMessage());
 							 logger.error("Error : " +e.getMessage());
 							 trabajando=false;
@@ -196,11 +214,14 @@ try{timer.cancel();}catch(Exception e){ logger.error("Error esperable timer.canc
 	         } 
 	     }; 
 	     
-
+	     try{
 	     
 	     timer = new Timer(); 
 	   
-	     timer.scheduleAtFixedRate(timerTask, 0, segundos*1000);	
+	     timer.scheduleAtFixedRate(timerTask, 0, segundos*1000);
+	     }catch(Exception e){
+	    	 logger.error("Error : " +e.getMessage());
+	     }
 	    
 		
 	}
@@ -237,10 +258,10 @@ private String seleccionarRuta(){
 			jLabelImagen.setIcon(icono);
 			jLabelHasta = new JLabel();
 			jLabelHasta.setText("Hasta ");
-			jLabelHasta.setBounds(new Rectangle(7, 45, 148, 20));
+			jLabelHasta.setBounds(new Rectangle(63, 56, 121, 20));
 			jLabelDesde = new JLabel();
 			jLabelDesde.setText("Desde ");
-			jLabelDesde.setBounds(new Rectangle(7, 22, 148, 20));
+			jLabelDesde.setBounds(new Rectangle(63, 21, 121, 20));
 			jContentPane = new JPanel();
 			jContentPane.setLayout(null);
 			jContentPane.setBorder(BorderFactory.createLineBorder(Color.yellow, 5));
@@ -249,13 +270,18 @@ private String seleccionarRuta(){
 			
 
 			dateChooserDesde = new JDateChooser();
-			dateChooserDesde.setBounds(new Rectangle(162, 23, 121, 20));
+			dateChooserDesde.setBounds(new Rectangle(245, 18, 121, 20));
 		    this.getContentPane().add(dateChooserDesde);
 			
 			dateChooserHasta = new JDateChooser();
-			dateChooserHasta.setBounds(new Rectangle(162, 46, 121, 20));
+			dateChooserHasta.setBounds(new Rectangle(245, 56, 121, 20));
 		    this.getContentPane().add(dateChooserHasta);
 			jContentPane.add(getJPanelControles(), null);
+			this.addWindowListener(new WindowAdapter(){
+                public void windowClosing(WindowEvent e){
+                    logger.info("Saliendo del programa");
+                    }
+            });
 			
 				
 		}
@@ -291,7 +317,7 @@ private String seleccionarRuta(){
 			jTable.setIntercellSpacing(new Dimension(3, 3));
 			
 			jTable.setBackground(new Color(255, 255, 204));
-			jTable.setDefaultRenderer (Object.class, new RenderCelda());
+			//jTable.setDefaultRenderer (Object.class, new RenderCelda());
 			jTable.getTableHeader().setReorderingAllowed(false) ;
 			
 				
@@ -309,16 +335,17 @@ private String seleccionarRuta(){
 		if (jButton == null) {
 			jButton = new JButton();
 			jButton.setText("Refrescar Pantalla");
-			jButton.setBounds(new Rectangle(147, 89, 140, 26));
+			jButton.setBounds(new Rectangle(252, 88, 140, 26));
 			jButton.setToolTipText("Enciende la consulta periódica refrescando la pantalla");
 			jButton.setBorder(new LineBorder(Color.YELLOW));
 			jButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 				
-					if(trabajando==false){
+					if(trabajando==false){// Esta variable está para que no permita apretar el botón refresh muchas veces
 					try {
 						
-						validarSegundosTimer(segundos);
+						validarSegundosTimer();
+						
 						inicializarTablaYtimer(segundos);
 						logger.info("Usuario oprime botón refrescar");
 						trabajando=false;
@@ -357,7 +384,7 @@ private String seleccionarRuta(){
 		if (jButtonFiltrarPorFecha == null) {
 			jButtonFiltrarPorFecha = new JButton();
 			jButtonFiltrarPorFecha.setToolTipText("Filtra los eventos en el rango de fechas indicado y apaga la consulta periódica");
-			jButtonFiltrarPorFecha.setBounds(new Rectangle(173, 93, 127, 22));
+			jButtonFiltrarPorFecha.setBounds(new Rectangle(245, 90, 127, 22));
 			jButtonFiltrarPorFecha.setText("Filtrar Por Fecha");
 			jButtonFiltrarPorFecha.setBorder(new LineBorder(Color.YELLOW));
 			jButtonFiltrarPorFecha.addActionListener(new java.awt.event.ActionListener() {
@@ -442,7 +469,7 @@ private String seleccionarRuta(){
 		if (jTextFieldSegundos == null) {
 			jTextFieldSegundos = new JTextField();
 			jTextFieldSegundos.setText(ParametrosInicio.getTiempoRefrescoTabla());
-			jTextFieldSegundos.setBounds(new Rectangle(250, 15, 34, 20));
+			jTextFieldSegundos.setBounds(new Rectangle(357, 16, 34, 20));
 			jTextFieldSegundos.addKeyListener(new java.awt.event.KeyAdapter() {
 				public void keyPressed(java.awt.event.KeyEvent e) {
 					if(e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -555,7 +582,7 @@ private String seleccionarRuta(){
 		if (jButtonExportarExcel == null) {
 			jButtonExportarExcel = new JButton();
 			jButtonExportarExcel.setText("Exportar a Excel");
-			jButtonExportarExcel.setBounds(new Rectangle(23, 93, 127, 22));
+			jButtonExportarExcel.setBounds(new Rectangle(59, 90, 127, 22));
 			jButtonExportarExcel.setBorder(new LineBorder(Color.YELLOW));
 			jButtonExportarExcel.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {

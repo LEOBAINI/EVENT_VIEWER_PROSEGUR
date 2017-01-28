@@ -259,6 +259,8 @@ public class MetodosSql extends Conexion {
         catch (SQLException e) {
         
             logger.error("Error : " +e.getMessage());
+        }catch (Exception e1){
+        	logger.error("Error : " +e1.getMessage());
         }
         con.desconectar();
         return tablaDatos;

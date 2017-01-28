@@ -40,7 +40,15 @@ public class Hilo extends Thread{
 	    	estaVivo=false;
 	    }
 	
-	     
+	    public void setearTamanioColumnas(){
+	    	table.getColumnModel().getColumn(0).setMinWidth(150);
+	     	table.getColumnModel().getColumn(0).setMaxWidth(150);
+	     	table.getColumnModel().getColumn(3).setMinWidth(100);
+	     	table.getColumnModel().getColumn(3).setMaxWidth(110);
+	     	table.getColumnModel().getColumn(4).setMinWidth(200);
+	     	table.getColumnModel().getColumn(5).setMaxWidth(100);
+	     	table.getColumnModel().getColumn(7).setMaxWidth(70);
+	    }
 	
 	    private void inicializarTablaConFecha(String fecha1,
 				String fecha2,JTable jTable,JLabel jLabelInfo)  {
@@ -74,7 +82,9 @@ public class Hilo extends Thread{
         			 minutos="0"+minutos;
         		 if(segundo.length()==1)
         			 segundo="0"+segundo;
-				jTable.setModel(MetodosSql.llenarJtable(query, jLabelInfo, hora, minutos, segundo).getModel());							
+				jTable.setModel(MetodosSql.llenarJtable(query, jLabelInfo, hora, minutos, segundo).getModel());	
+				
+				setearTamanioColumnas();
 				jTable.repaint();
 				jLabelInfo.setText("Pulsó Botón filtro, para ver automático\n oprima Refrescar");
 			//	logger.info("Refrescando tabla manual por oprimir botón filtro");

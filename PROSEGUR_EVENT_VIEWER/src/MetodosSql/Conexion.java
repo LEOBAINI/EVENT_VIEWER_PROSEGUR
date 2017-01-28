@@ -70,7 +70,7 @@ public class Conexion {
                 Class.forName(driver);
                 c=DriverManager.getConnection(cadena);
                  statemente=c.createStatement();
-                System.out.println("Conectado OK");
+                 logger.info("Conectado ok! a "+server);
                  
                 conecto=true;
             }catch(ClassNotFoundException e1){
@@ -99,6 +99,7 @@ public class Conexion {
                 try {
                     if (c != null){
                         c.close();
+                        logger.info("Liberando conexión al servidor.");
                          
                          
                          

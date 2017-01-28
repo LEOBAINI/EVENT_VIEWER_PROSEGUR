@@ -21,7 +21,7 @@ al.alarm_local_date as Fecha
  )))
   
  and  al.alarm_local_date > @fechadesde 
- and  al.alarm_local_date < @fechahasta 
+ and  al.alarm_local_date < dateadd(dd,+1,@fechahasta)     
  order by alarm_local_date desc 
 
 

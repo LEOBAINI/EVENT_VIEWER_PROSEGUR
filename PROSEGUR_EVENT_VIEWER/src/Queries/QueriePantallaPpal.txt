@@ -1,24 +1,23 @@
-select top 50 
-al.alarm_local_date as Fecha
-,si.site_name as Nombre
-,si.city_name as Ciudad
-,sy.cs_no as Cod_con
-,z.comment as Zona
-,al.event_id as Evento
-,e.descr as Descripción
-,al.priority as Prioridad
-
- from  alarm_incident al with (nolock)
- inner join event e on e.event_id=al.event_id
- inner join system sy on sy.system_no=al.system_no
- inner join site si on si.site_no=sy.site_no
- inner join zone z on z.zone_id=al.alarm_zone_id and z.system_no=al.system_no
- 
- and al.system_no in (Select system_no from system where site_no in (select site_no from site where udf4 in (
- /*Colocar contratos separados por coma y entre comillas simples*/
- '097277'
+SELECT TOP 50
+		convert(varchar, event_date, 105)  AS FECHA
+       ,convert(char(8), event_date, 108) as HORA   
+       ,si.site_name as NOMBRE 
+       ,sy.cs_no as COD_CONEC  
+       ,ISNULL(ev.zone_comment,'N/Z') AS ZONA
+       ,ev.event_id AS EVENTO     
+       ,ev.event_descr AS DESCRIPCION
+       ,e.priority AS PRIORIDAD
+		
+       FROM MonitorDB.dbo.event_history ev with (nolock)
+	   inner join system sy on ev.system_no=sy.system_no
+       inner join site si on sy.site_no=si.site_no
+       inner join event e on ev.event_id=e.event_id
+	   and ev.system_no in (Select system_no from system where site_no in (select site_no from site where udf4 in (
+       /*Colocar contratos separados por coma y entre comillas simples*/
+       '097277'
  
  
  )))
-  
- order by alarm_local_date desc
+       and ev.employee_initials is null
+       and e.priority!=0
+       order by event_date desc

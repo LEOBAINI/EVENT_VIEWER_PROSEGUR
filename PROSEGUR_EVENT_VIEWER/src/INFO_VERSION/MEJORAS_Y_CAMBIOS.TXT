@@ -1,0 +1,29 @@
+/*INFORMACIÓN SOBRE MEJORAS */
+V1.01
+=====================================================================================================================================
+- 26-01-2017 -
+------------
+Bugs detectados :
+
+1.	Al cambiar el tiempo de actualización a 30seg y luego presionar el botón “Refrescar pantalla”, sigue actualizándose en 60seg.
+1.	CORREGIDO.
+2.	Ampliar al doble el ancho de la columna “ZONA”, reducir a la mitad el ancho de las columnas “COD_CON”,“EVENTO” y “PRIORIDAD”
+2.	CORREGIDO.
+3.	Se realizó filtro de fechas del 24ene al 25ene y solo filtra 24ene, debería incluir también el 25ene.
+3.	CORREGIDO.
+
+=====================================================================================================================================
+PEDIDO DEL CLIENTE
+-27-01-2017-
+------------
+
+1.       Separar el campo fecha en 2: FECHA (AAAA-MM-DD) y otro campos de HORA (HH:MM:SS) * HECHO
+2.       Quitar el campo CIUDAD.* HECHO
+3.       El campo ZONA: mañana los llamamos para explicarles el detalle, en resumen necesitan especificar qué significa [35], (C), (P1) con términos que ellos entiendan.
+4.       El campo DESCRIPCIÓN: brindarles un glosario de todas las descripciones que tenemos para que los puedan conocer,* HAY 12000 DESCRIPCIONES, TODAS?
+4.A      también que sepan que color tiene asociado cada evento.  *HACIENDO
+4.B		 De poderse incluir una leyenda sería ideal (Opcional)* ESPECIFICAR QUE LEYENDA
+5.       Incluir el coloreado de acuerdo a cada evento (ayer lo coordinamos). * HECHO POR PRIORIDAD, ES LO MISMO?
+6.       Ver la posibilidad de incluir solo para algunos eventos “un sonido”. * VER...
+7.       No se debe incluir eventos con prioridad CERO.* HECHO
+

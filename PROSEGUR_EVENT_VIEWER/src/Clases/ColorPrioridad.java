@@ -21,6 +21,10 @@ public  class ColorPrioridad {
 		for(int i=0;i<nrosPrioridad.size();i++){
 			codigoColor=Integer.parseInt(nrosPrioridad.get(i).get(0));
 			color=nrosPrioridad.get(i).get(1);
+			if(color==null){
+				color="black";
+				logger.info("Cargado color "+color+" en codigo: "+codigoColor+ " porque color era null." );
+			}
 			coloresPrioridad.put(codigoColor, color);
 			logger.info("Cargado codigo: "+codigoColor+ " -> color: "+color );
 		}
